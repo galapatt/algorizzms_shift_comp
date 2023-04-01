@@ -1,2 +1,2 @@
 # shift_comp
-Repo for SHIFT Competition 2023
+Containing submission for SHIFT Algorithmic Trading Competition 2023
