@@ -51,7 +51,6 @@ def strategy(trader: shift.Trader, ticker: str, endtime):
     # that you are able to close your position at the end of the strategy without incurring major losses.
 
     initial_pl = trader.get_portfolio_item(ticker).get_realized_pl()
-
     # strategy parameters
     check_freq = 1
     order_size = 5  # NOTE: this is 5 lots which is 500 shares.
@@ -73,15 +72,15 @@ def strategy(trader: shift.Trader, ticker: str, endtime):
         midprice = (best_bid + best_ask) / 2
 
         # place order
-        if (midprice > previous_price):  # price has increased since last timestep
-            # we predict price will continue to go up
+        if (midprice < previous_price and 0 < trader.get_portfolio_summary().get_total_bp()):  # price has decreased since last timestep
+            # we predict price will revert and go up, so we send a limit buy order at the best bid price
             order = shift.Order(
-                shift.Order.Type.MARKET_BUY, ticker, order_size)
+                shift.Order.Type.LIMIT_BUY, ticker, order_size, best_bid)
             trader.submit_order(order)
-        elif (midprice < previous_price):  # price has decreased since last timestep
-            # we predict price will continue to go down
+        elif (midprice > previous_price and 0 < trader.get_portfolio_summary().get_total_bp()):  # price has increased since last timestep
+            # we predict price will revert and go down, so we send a limit sell order at the best ask price
             order = shift.Order(
-                shift.Order.Type.MARKET_SELL, ticker, order_size)
+                shift.Order.Type.LIMIT_SELL, ticker, order_size, best_ask)
             trader.submit_order(order)
 
             # NOTE: If you place a sell order larger than your current long position, it will result in a short sale, which
@@ -90,6 +89,9 @@ def strategy(trader: shift.Trader, ticker: str, endtime):
             # close that position, assuming the price has not changed, it will require another $10000 of buying power, after
             # which our pre short-sale buying power will be restored, minus any transaction costs. Therefore, it requires
             # double the buying power to open and close a short position than a long position.
+
+        if (trader.get_portfolio_summary().get_total_bp() < 1):
+            trader.cancel_all_pending_orders()
 
         previous_price = midprice
         sleep(check_freq)
@@ -120,8 +122,8 @@ def main(trader):
 
     threads = []
 
-    # in this example, we simultaneously and independantly run our trading alogirthm on two tickers
-    tickers = ["AAPL", "MSFT"]
+    # in this example, we simultaneously and independently run our trading algorithm on two tickers
+    tickers = ["AAPL", "MSFT", "WMT", "NKE", "DIS"]
 
     print("START")
 
