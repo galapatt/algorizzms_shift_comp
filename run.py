@@ -123,7 +123,7 @@ def main(trader):
     threads = []
 
     # in this example, we simultaneously and independently run our trading algorithm on two tickers
-    tickers = ["AAPL", "MSFT", "WMT", "NKE", "DIS"]
+    tickers = ["CS1","CS2"]
 
     print("START")
 
